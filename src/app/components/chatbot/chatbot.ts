@@ -2,6 +2,7 @@ import { Component, signal, ElementRef, AfterViewInit, OnDestroy, HostListener, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { ChatbotService } from './chatbot.service';
 
 interface Message {
   text: string;
@@ -31,7 +32,7 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
   isExpanded = signal(false);
   inputMessage = signal('');
   messages = signal<Message[]>([
-    { text: "Hello! I'm an AI representation of Elon. Ask me about my projects, skills, or experience.", isBot: true }
+    { text: "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.", isBot: true }
   ]);
   isTyping = signal(false);
 
@@ -50,7 +51,10 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
 
   private observer: IntersectionObserver | null = null;
 
-  constructor(private el: ElementRef) { }
+  constructor(
+    private el: ElementRef,
+    private chatbotService: ChatbotService
+  ) { }
 
   ngAfterViewInit() {
     this.setupIntersectionObserver();
@@ -115,22 +119,21 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
   }
 
   private setupIntersectionObserver() {
-    const section = document.getElementById('chatbot-dock-target');
+    const section = document.getElementById('ai-demo'); // Changed target ID
     if (!section) return;
 
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        // Only expand if at least 70% of the section is visible
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
+        // Simplified expansion logic
+        if (entry.isIntersecting) {
           this.isExpanded.set(true);
           this.isOpen.set(true);
-        } else if (entry.intersectionRatio < 0.3) {
-          // Morph back if visibility drops below 30%
+        } else {
           this.isExpanded.set(false);
         }
       });
     }, {
-      threshold: [0.3, 0.7] // Handle both entering and leaving with hysteresis
+      threshold: 0.3 // Changed threshold
     });
 
     this.observer.observe(section);
@@ -144,18 +147,58 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
     const text = this.inputMessage().trim();
     if (!text) return;
 
-    // Add user message
+    // 1. Build context from existing messages (excluding the first welcome message if desired, 
+    // but here we include all for consistency with the reference)
+    const contextPrompt = this.messages()
+      .filter(msg => msg.text !== "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.")
+      .map(msg => `${msg.isBot ? 'assistant' : 'user'}: ${msg.text}`)
+      .join('\n');
+
+    // 2. Construct final prompt matching the reference implementation format
+    const fullPrompt = (contextPrompt ? contextPrompt + '\n' : '') + 'user: ' + text + '\nassistant:';
+
+    console.log('Sending message with context:', fullPrompt);
+
+    // 3. Update UI with user message
     this.messages.update(msgs => [...msgs, { text, isBot: false }]);
     this.inputMessage.set('');
     this.isTyping.set(true);
 
-    // Simulate delay and response
-    setTimeout(() => {
-      this.isTyping.set(false);
-      this.messages.update(msgs => [
-        ...msgs,
-        { text: "I'm having trouble connecting to my brain right now. Please try again later!", isBot: true }
-      ]);
-    }, 1500);
+    let botMessageIndex = -1;
+
+    // 4. Send the FULL PROMPT to the service
+    this.chatbotService.sendMessageStream(fullPrompt).subscribe({
+      next: (chunk: string) => {
+        if (this.isTyping()) {
+          this.isTyping.set(false);
+          this.messages.update(msgs => {
+            botMessageIndex = msgs.length;
+            return [...msgs, { text: chunk, isBot: true }];
+          });
+        } else {
+          this.messages.update(msgs => {
+            const updated = [...msgs];
+            if (botMessageIndex !== -1) {
+              updated[botMessageIndex] = {
+                ...updated[botMessageIndex],
+                text: updated[botMessageIndex].text + chunk
+              };
+            }
+            return updated;
+          });
+        }
+      },
+      error: (err: any) => {
+        this.isTyping.set(false);
+        this.messages.update(msgs => [
+          ...msgs,
+          { text: "I'm having trouble connecting to my brain right now. Please try again later!", isBot: true }
+        ]);
+        console.error('Chatbot error:', err);
+      },
+      complete: () => {
+        this.isTyping.set(false);
+      }
+    });
   }
 }
