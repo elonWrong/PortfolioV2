@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --bg-color: #050510;
-  --text-color: #e0e0e0;
-  --primary-color: #6c5ce7;
-  --secondary-color: #00cec9;
-  --accent-color: #fd79a8;
+  --bg-color: #0f0524;
+  --text-color: #f8fafc;
+  --primary-color: #8b5cf6;
+  --secondary-color: #06b6d4;
+  --accent-color: #d946ef;
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --spacing-md: 2rem;
   --spacing-lg: 4rem;
-  --shadow-glow: 0px 5px 15px rgba(108, 92, 231, 0.4);
+  --shadow-glow: 0px 5px 15px rgba(139, 92, 246, 0.4);
 }
 
 html {
@@ -40,7 +40,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  @apply bg-gradient-to-r from-primary to-secondary text-white hover:shadow-[0_0_15px_rgba(108,92,231,0.5)];
+  @apply bg-gradient-to-r from-accent to-primary text-white hover:shadow-[0_0_15px_rgba(217,70,239,0.5)];
 }
 
 .btn-secondary {
