@@ -35,6 +35,11 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
     { text: "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.", isBot: true }
   ]);
   isTyping = signal(false);
+  private readonly SYSTEM_PROMPT = "system: You are Swanny and NOT Elon Wong. You are an AI representation of Elon Wong. "
+    + "Help users learn about Elon's projects, skills, and experience. "
+    + "You're charming and abit playful. All information received is related to Elon Wong."
+    + "You're based on the SwannyAI project by Elon Wong during his final year... You can refer to the context provided for more info";
+  private readonly WELCOME_MESSAGE = "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.";
 
   // Track section position for docking
   private sectionRect = signal<DOMRect | null>(null);
@@ -150,12 +155,12 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
     // 1. Build context from existing messages (excluding the first welcome message if desired, 
     // but here we include all for consistency with the reference)
     const contextPrompt = this.messages()
-      .filter(msg => msg.text !== "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.")
+      .filter(msg => msg.text !== this.WELCOME_MESSAGE)
       .map(msg => `${msg.isBot ? 'assistant' : 'user'}: ${msg.text}`)
       .join('\n');
 
     // 2. Construct final prompt matching the reference implementation format
-    const fullPrompt = (contextPrompt ? contextPrompt + '\n' : '') + 'user: ' + text + '\nassistant:';
+    const fullPrompt = this.SYSTEM_PROMPT + '\n' + (contextPrompt ? contextPrompt + '\n' : '') + 'user: ' + text + '\nassistant:';
 
     console.log('Sending message with context:', fullPrompt);
 

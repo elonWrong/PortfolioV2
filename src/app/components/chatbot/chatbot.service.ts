@@ -11,14 +11,14 @@ export class ChatbotService {
     sendMessageStream(prompt: string): Observable<string> {
         const request: PromptRequestDtoV2 = {
             promptRequest: {
-                model: 'LLAMA31',
+                model: 'GEMMA',
                 prompt: prompt,
                 options: {
                     temperature: 0.8,
                     num_ctx: 4096
                 }
             },
-            collectionName: 'BELIMO'
+            collectionName: 'ME'
         };
 
         return new Observable<string>(subscriber => {
