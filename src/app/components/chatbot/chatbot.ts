@@ -1,4 +1,4 @@
-import { Component, signal, ElementRef, AfterViewInit, OnDestroy, HostListener, computed } from '@angular/core';
+import { Component, signal, ElementRef, AfterViewInit, OnDestroy, HostListener, computed, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -32,14 +32,16 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
   isExpanded = signal(false);
   inputMessage = signal('');
   messages = signal<Message[]>([
-    { text: "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.", isBot: true }
+    { text: "Hello! I'm Swanny, an AI representitive of Elon. Ask me about Elon's projects, skills, or experience.", isBot: true }
   ]);
   isTyping = signal(false);
-  private readonly SYSTEM_PROMPT = "system: You are Swanny and NOT Elon Wong. You are an AI representation of Elon Wong. "
+  private readonly SYSTEM_PROMPT = "system: You are Swanny and NOT Elon Wong. You are an AI representitive of Elon Wong."
+    + "You will be describing Elon Wong in the third person. For example, instead of saying 'I did this', say 'Elon/He did this'."
     + "Help users learn about Elon's projects, skills, and experience. "
     + "You're charming and abit playful. All information received is related to Elon Wong."
     + "You're based on the SwannyAI project by Elon Wong during his final year... You can refer to the context provided for more info";
-  private readonly WELCOME_MESSAGE = "Hello! I'm Swanny, an AI representation of Elon. Ask me about my projects, skills, or experience.";
+  private readonly WELCOME_MESSAGE = "Hello! I'm Swanny, an AI representitive of Elon. Ask me about Elon's projects, skills, or experience.";
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   // Track section position for docking
   private sectionRect = signal<DOMRect | null>(null);
@@ -59,7 +61,15 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
   constructor(
     private el: ElementRef,
     private chatbotService: ChatbotService
-  ) { }
+  ) {
+    // Auto-scroll effect
+    effect(() => {
+      // Monitor messages and isTyping
+      this.messages();
+      this.isTyping();
+      this.scrollToBottom();
+    });
+  }
 
   ngAfterViewInit() {
     this.setupIntersectionObserver();
@@ -205,5 +215,19 @@ export class ChatbotComponent implements AfterViewInit, OnDestroy {
         this.isTyping.set(false);
       }
     });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      try {
+        if (this.scrollContainer) {
+          const element = this.scrollContainer.nativeElement;
+          element.scrollTo({
+            top: element.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      } catch (err) { }
+    }, 100);
   }
 }

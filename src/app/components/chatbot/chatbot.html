@@ -35,7 +35,7 @@
         </div>
 
         <!-- Messages -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <div #scrollContainer class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
             <div *ngFor="let msg of messages()"
                 [ngClass]="{'bg-white/5 text-white border border-white/10': msg.isBot, 'bg-primary/20 text-white ml-auto border border-primary/30': !msg.isBot}"
                 class="max-w-[85%] p-3 md:p-4 rounded-2xl text-sm md:text-base leading-relaxed backdrop-blur-sm self-start">
